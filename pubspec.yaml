@@ -1,0 +1,28 @@
+name: firebase_notify
+description: A new Flutter application.
+version: 1.0.0+1
+
+environment:
+  sdk: ">=2.15.0 <3.0.0"
+
+dependencies:
+  flutter:
+    sdk: flutter
+
+  cupertino_icons: ^1.0.2
+  firebase_core: ^1.13.1
+  firebase_messaging: ^11.2.11
+  flutter_local_notifications: ^9.4.0
+
+  cloud_firestore: any
+
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+
+  flutter_lints: ^1.0.0
+
+
+flutter:
+  uses-material-design: true
