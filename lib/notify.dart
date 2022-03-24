@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:rxdart/rxdart.dart';
 
+//  CLICKABLE LOCAL NOTIFICATIONS
+
 class Notify extends StatefulWidget {
   @override
   State<Notify> createState() => _NotifyState();
@@ -44,18 +46,13 @@ class _NotifyState extends State<Notify> {
   }
 }
 
-class SecPage extends StatefulWidget {
+class SecPage extends StatelessWidget {
+  final String? payload;
   const SecPage({
     Key? key,
-    required payload,
+    required this.payload,
   }) : super(key: key);
 
-  @override
-  State<StatefulWidget> createState() => _SecPageState();
-}
-
-class _SecPageState extends State<SecPage> {
-  late final String? payload;
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -75,6 +72,7 @@ class _SecPageState extends State<SecPage> {
       ),
     );
   }
+
 }
 
 class NotificationApi {
@@ -95,6 +93,7 @@ class NotificationApi {
   );
 
   static Future _notificationDetails() async {
+    print('notified');
     return NotificationDetails(
       android: AndroidNotificationDetails(
         'channel id',
