@@ -1,6 +1,7 @@
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:overlay_support/overlay_support.dart';
 import 'model/push_notify.dart';
 
@@ -9,6 +10,7 @@ import 'model/push_notify.dart';
 Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
   print("Handling a background message: ${message.messageId}");
 }
+
 
 void main() async {
   runApp(MyApp());
@@ -36,13 +38,17 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePageState extends State<HomePage> {
-  late final FirebaseMessaging _messaging;
+  late final FirebaseMessaging _messaging = FirebaseMessaging.instance;
   late int _totalNotifications;
   PushNotification? _notificationInfo;
 
+  void pushFCMtoken() async {
+    String? token = await _messaging.getToken();
+    print(token);
+  }
+
   void registerNotification() async {
     await Firebase.initializeApp();
-    _messaging = FirebaseMessaging.instance;
 
     FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
 
