@@ -2,11 +2,11 @@ import 'package:flutter/material.dart';
 
 
 class SecPage extends StatelessWidget {
-  final String? payload;
-  const SecPage({
-    Key? key,
-    required this.payload,
-  }) : super(key: key);
+  // final String? payload;
+  // const SecPage({
+  //   Key? key,
+  //   required this.payload,
+  // }) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
@@ -18,7 +18,7 @@ class SecPage extends StatelessWidget {
       ),
       body: Center(
         child: Text(
-          payload ?? ' \n Heyyy! NO Notify Data',
+          /*payload ?? */' \n Heyyy! Notify Data',
           style: TextStyle(
             fontSize: 20,
             color: Colors.lightBlueAccent,

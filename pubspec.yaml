@@ -15,10 +15,10 @@ dependencies:
   firebase_messaging: any
   flutter_local_notifications: ^9.4.0
   cloud_firestore: any
+  overlay_support: ^1.2.1
 
   rxdart: ^0.27.3
   timezone: ^0.8.0
-  overlay_support: ^1.2.1
 
 
 dev_dependencies:
