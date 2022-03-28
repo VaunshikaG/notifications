@@ -1,7 +1,6 @@
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:firebase_notify/model/push_notify.dart';
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:overlay_support/overlay_support.dart';
@@ -17,29 +16,6 @@ Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp();
-
-  FlutterLocalNotificationsPlugin? fltNotification;
-  late AndroidNotificationChannel channel;
-  if (!kIsWeb) {
-    channel = const AndroidNotificationChannel(
-      'tutorialspoint_notification', // id
-      'Tutorialspoint Online', // title
-
-      importance: Importance.high,
-    );
-
-    await fltNotification?.resolvePlatformSpecificImplementation<
-        AndroidFlutterLocalNotificationsPlugin>()
-        ?.createNotificationChannel(channel);
-
-    await FirebaseMessaging.instance
-        .setForegroundNotificationPresentationOptions(
-      alert: true,
-      badge: true,
-      sound: true,
-    );
-  }
-
   runApp(MyApp());
 }
 
@@ -65,10 +41,12 @@ class Demo extends StatefulWidget {
 class _DemoState extends State<Demo> {
   FirebaseMessaging messaging = FirebaseMessaging.instance;
   late FlutterLocalNotificationsPlugin fltNotification;
+  PushNotification? _notificationInfo;
+  late int _totalNotifications;
 
   void pushFCMtoken() async {
     String? token = await messaging.getToken();
-    print('FCM: $token');
+    print(token);
   }
 
   // For handling notification when the app is in terminated state
@@ -84,6 +62,11 @@ class _DemoState extends State<Demo> {
         dataTitle: initialMessage.data['title'],
         dataBody: initialMessage.data['body'],
       );
+
+      setState(() {
+        _notificationInfo = notification;
+        _totalNotifications++;
+      });
     }
   }
 
@@ -114,6 +97,21 @@ class _DemoState extends State<Demo> {
           dataBody: message.data['body'],
         );
 
+        setState(() {
+          _notificationInfo = notification;
+          _totalNotifications++;
+        });
+
+        if (_notificationInfo != null) {
+          // For displaying the notification as an overlay
+          showSimpleNotification(
+            Text(_notificationInfo!.title!),
+            leading: NotificationBadge(totalNotifications: _totalNotifications),
+            subtitle: Text(_notificationInfo!.body!),
+            background: Colors.cyan.shade700,
+            duration: Duration(seconds: 2),
+          );
+        }
       });
     } else {
       print('User declined or has not accepted permission');
@@ -125,35 +123,26 @@ class _DemoState extends State<Demo> {
     super.initState();
     pushFCMtoken();
     initMessaging();
+    _totalNotifications = 0;
     registerNotification();
     checkForInitialMessage();
 
-    // For handling notification when the app is in background but not terminated
-    // FirebaseMessaging.onMessageOpenedApp.listen((RemoteMessage message) {
-    //   PushNotification notification = PushNotification(
-    //     title: message.notification?.title,
-    //     body: message.notification?.body,
-    //     dataTitle: message.data['title'],
-    //     dataBody: message.data['body'],
-    //   );
-    // });
-
+    // For handling notification when the app is in background
+    // but not terminated
     FirebaseMessaging.onMessageOpenedApp.listen((RemoteMessage message) {
-      print("Printing on Message Notification click");
-      message.data.keys.forEach((element) {
-        print("Printing on Message Notification click keys ${element}");
+      PushNotification notification = PushNotification(
+        title: message.notification?.title,
+        body: message.notification?.body,
+        dataTitle: message.data['title'],
+        dataBody: message.data['body'],
+      );
+
+      setState(() {
+        _notificationInfo = notification;
+        _totalNotifications++;
       });
-      if (message != null) {
-        if(message.data.isNotEmpty)
-        {
-          String click=message.data['click'] as String;
-          String screen=message.data['screen'] as String;
-        }
-        Navigator.of(context).push(
-            MaterialPageRoute(builder: (context) => SecPage(),
-            ));
-      }
     });
+
   }
 
   @override
@@ -163,15 +152,43 @@ class _DemoState extends State<Demo> {
         title: Text('Notify'),
         brightness: Brightness.dark,
       ),
-      body: Center(
-        child: Text(
-          'App for capturing Firebase Push Notifications',
-          textAlign: TextAlign.center,
-          style: TextStyle(
-            color: Colors.black,
-            fontSize: 20,
+      body: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Text(
+            'App for capturing Firebase Push Notifications',
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              color: Colors.black,
+              fontSize: 20,
+            ),
           ),
-        ),
+          SizedBox(height: 16.0),
+          NotificationBadge(totalNotifications: _totalNotifications),
+          SizedBox(height: 16.0),
+          _notificationInfo != null
+              ? Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'TITLE: ${_notificationInfo!.dataTitle ?? _notificationInfo!.title}',
+                style: TextStyle(
+                  fontWeight: FontWeight.bold,
+                  fontSize: 16.0,
+                ),
+              ),
+              SizedBox(height: 8.0),
+              Text(
+                'BODY: ${_notificationInfo!.dataBody ?? _notificationInfo!.body}',
+                style: TextStyle(
+                  fontWeight: FontWeight.bold,
+                  fontSize: 16.0,
+                ),
+              ),
+            ],
+          )
+              : Container(),
+        ],
       ),
     );
   }
@@ -181,29 +198,29 @@ class _DemoState extends State<Demo> {
     var iosInit = IOSInitializationSettings();
     var initSetting = InitializationSettings(android: androiInit, iOS: iosInit);
     fltNotification = FlutterLocalNotificationsPlugin();
-    // fltNotification.initialize(initSetting);
+    fltNotification.initialize(initSetting);
 
     fltNotification.initialize(initSetting, onSelectNotification: (payload) async {
       setState(() {
         Navigator.of(context).push(
-            MaterialPageRoute(builder: (context) => SecPage(),
+            MaterialPageRoute(builder: (context) => SecPage(payload: payload),
             ));
       });
     });
 
-    var generalNotificationDetails = NotificationDetails(
-        android: AndroidNotificationDetails(
-          '1',
-          'channelName',
-          channelDescription: 'channel Description',
-        ),
-        iOS: IOSNotificationDetails(),
+    var androidDetails = const AndroidNotificationDetails(
+      '1',
+      'channelName',
+      channelDescription: 'channel Description',
     );
+
+    var iosDetails = IOSNotificationDetails();
+    var generalNotificationDetails = NotificationDetails(android: androidDetails, iOS: iosDetails);
 
     FirebaseMessaging.onMessage.listen((RemoteMessage message) {
       RemoteNotification? notification = message.notification;
       AndroidNotification? android = message.notification?.android;
-      if (notification != null && android != null && !kIsWeb) {
+      if (notification != null && android != null) {
         // fltNotification.show(
         //   notification.hashCode,
         //   notification.title,
@@ -219,5 +236,32 @@ class _DemoState extends State<Demo> {
         );
       }
     });
+  }
+}
+
+class NotificationBadge extends StatelessWidget {
+  final int totalNotifications;
+
+  const NotificationBadge({required this.totalNotifications});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: 40.0,
+      height: 40.0,
+      decoration: new BoxDecoration(
+        color: Colors.red,
+        shape: BoxShape.circle,
+      ),
+      child: Center(
+        child: Padding(
+          padding: const EdgeInsets.all(8.0),
+          child: Text(
+            '$totalNotifications',
+            style: TextStyle(color: Colors.white, fontSize: 20),
+          ),
+        ),
+      ),
+    );
   }
 }
